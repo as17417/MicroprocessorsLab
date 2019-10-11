@@ -6,27 +6,28 @@
 	
 	org 0x100		    ; Main code starts here at address 0x100
 
-start
-	movlw   high(0xFFFF)
-	movwf	0x20
-	movlw	low(0xFFFF)
-	movwf	0x21
-	movlw 	0x0
-	movwf	TRISC, ACCESS	    ; Port C all outputs
-	bra 	test
-loop	movff 	0x06, PORTC
-	call	bigdelay
-	incf 	0x06, W, ACCESS
-test	movwf	0x06, ACCESS	    ; Test for end of loop condition
-	movlw 	0xFF
-	cpfsgt 	0x06, ACCESS
-	bra 	loop		    ; Not yet finished goto start of loop again
-	goto 	0x0		    ; Re-run program from start
+start	movlw	0xFF
+	movwf	TRISD, ACCESS
+	movlw	0x3
+	movwf	TRISE, ACCESS
+	movlw	0xFF
+	movwf	TRISF, ACCESS
+	movlw	0x4
+rloop	cpfseq	PORTF, ACCESS
+	bra	rloop
+	call	read
+	goto	0x0
 	
-bigdelay
-	movlw	0x00
-delay	decf	0x21, f
-	subwfb	0x20, f
-	bc	delay
-	return	
+read	movlw	0x2
+	movwf	PORTE, ACCESS
+	movlw	0xFF
+	movwf	TRISD, ACCESS
+	return
+	
+write	movlw	0x3
+	movwf	PORTE, ACCESS
+	movlw	0x0
+	movwf	PORTD, ACCESS
+	return
+	
 	end
