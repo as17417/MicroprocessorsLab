@@ -6,28 +6,46 @@
 	
 	org 0x100		    ; Main code starts here at address 0x100
 
-start	movlw	0xFF
+start	movlw	0x0
 	movwf	TRISD, ACCESS
-	movlw	0x3
-	movwf	TRISE, ACCESS
 	movlw	0xFF
-	movwf	TRISF, ACCESS
-	movlw	0x4
-rloop	cpfseq	PORTF, ACCESS
-	bra	rloop
+	movwf	TRISE, ACCESS
+	movlw	0x2
+	movwf	0x55, ACCESS
+	call	write
 	call	read
 	goto	0x0
 	
-read	movlw	0x2
-	movwf	PORTE, ACCESS
+read	movlw	b'10'
+	movwf	PORTD, ACCESS
 	movlw	0xFF
-	movwf	TRISD, ACCESS
+	movwf	TRISE, ACCESS
+	movlw	0x0
+	movwf	TRISC, ACCESS
+	movff	PORTE, PORTC
 	return
 	
-write	movlw	0x3
-	movwf	PORTE, ACCESS
-	movlw	0x0
+write	movlw	b'11'
 	movwf	PORTD, ACCESS
+	movlw	0x0
+	movwf	TRISE, ACCESS
+	movlw	b'10111010'
+	movwf	LATE, ACCESS
+	call	clock
+	movlw	0xFF
+	movwf	TRISE, ACCESS
 	return
+	
+delay	decfsz	0x55
+	bra	delay
+	return
+
+clock	movlw	b'01'
+	movwf	PORTD, ACCESS
+	call	delay
+	movlw	b'11'
+	movwf	PORTD, ACCESS
 	
 	end
+
+	
