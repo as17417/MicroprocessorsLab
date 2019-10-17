@@ -7,58 +7,31 @@
 	org 0x100		    ; Main code starts here at address 0x100
 
 
-	
-setup	bcf	EECON1, CFGS	    ; point to Flash program memory
-	bsf	EECON1, EEPGD	    ; access Flash program memory
-	bra	start
-	
-bytes	db	"+", "y"	    ; 2 bytes of data to be written
 
-start	movlw	0x1		    ; for 250ns delay cp
-	movwf	0x100, ACCESS	    ; delay const address
-	movlw	0x	    ;
-	movlw	high(bytes)	    ; high byte of 'bytes'
-	movwf	TBLPTRH		    ; address of data in PM
-	movlw	low(bytes)	    ; low byte of 'bytes'
-	movwf	TBLPTRL		    ; address of data in PM
-	setf	LATD, ACCESS	    ; set all of PORTD high		    
-	movlw	0x0		    ; set all PORTD to output
-	movwf	TRISD, ACCESS	    ; 
-	call	write		    ; write bytes
-	call	read		    ; read bytes and display on PORTH and POROTJ
-	goto	0x0		    ; end program
+SPI_MasterInit	; Set Clock edge to negative
+	bcf	SSP2STAT, CKE
+	; MSSP enable; CKP=1; SPI master, clock=Fosc/64 (1MHz)
+	movlw 	(1<<SSPEN)|(1<<CKP)|(0x02)
+	movwf 	SSP2CON1
+	; SDO2 output; SCK2 output
+	bcf	TRISD, SDO2
+	bcf	TRISD, SCK2
+	return 
 
-read	movlw	0xFF		    ; set all PORTE to input
-	movwf	TRISE, ACCESS	    ;
-	movlw	b'1110'		    ; CP2,OE2*,CP1,OE1*
-	movwf	PORTD, ACCESS	    ; set memory 1 to output (read to PORTE)
-	
-	movff	PORTE, PORTH	    ; copy the byte from PORTE to PORTH
-	call	delb
-	clrf	LATH, ACCESS
-	
-	movlw	b'1011'		    ; CP2,OE2*,CP1,OE1*
-	movwf	PORTD, ACCESS	    ; set memory 2 to output (read to PORTE)
-	movff	PORTE, PORTJ	    ; copy the byte from PORTE to PORTJ
-	call	delb
-	clrf	LATJ, ACCESS
+SPI_MasterTransmit  ; Start transmission of data (held in W)
+	movwf 	SSP2BUF 
+Wait_Transmit	; Wait for transmission to complete 
+	btfss 	PIR2, SSP2IF
+	bra 	Wait_Transmit
+	bcf 	PIR2, SSP2IF	; clear interrupt flag
 	return
-	
-write	movlw	b'1111'		    ; CP2,OE2*,CP1,OE1*
-	movwf	PORTD, ACCESS	    ; set memory 1 to input (write from PORTE)
-	movlw	0x0		    ; set all PORTE to output
-	movwf	TRISE, ACCESS
-	
-	tblrd*+			    ; copy first byte to TABLAT and increment
-	movff	TABLAT, LATE	    ; copy the byte to LATE
-	call	clock1		    ; flick clock pulse to write
-	tblrd*+			    ; copy second byte to TABLAT and increment
-	movff	TABLAT, LATE	    ; copy the byte to LATE
-	call	clock2		    ; flick clock pulse to write
-	
-	movlw	0xFF		    ; set all PORTE to input
-	movwf	TRISE, ACCESS	    ; reset PORTE
-	return
+
+start	bcf	TRISE, ACCESS
+	call	SPI_MasterInit	  
+	movlw	0xF0
+	call	SPI_MasterTransmit
+	goto	finish		    ; end program
+
 	
 delay	decfsz	0x100		    ; decrement constant until 0
 	bra	delay		    ;
@@ -85,16 +58,6 @@ dloop	decf	0x17, f		    ; no carry when 0x00 -> 0xff
 	subwfb	0x15, f		    ; "
 	bc	dloop		    ; if carry, then loop again
 	return			    ; carry not set so return
-
-
-
-clock2	movlw	b'0111'		    ; CP2,OE2*,CP1,OE1*
-	movwf	PORTD, ACCESS	    ; set cp2 to low
-	call	delay		    ; delay for ~250 ns
-	movlw	b'1111'		    ; set cp1 to high
-	movwf	PORTD, ACCESS	    ;
-	return
-	
 finish
 	end
 
