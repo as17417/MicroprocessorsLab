@@ -16,10 +16,7 @@ bytes	db	"+", "y"	    ; 2 bytes of data to be written
 
 start	movlw	0x1		    ; for 250ns delay cp
 	movwf	0x100, ACCESS	    ; delay const address
-	movlw	0x0		    ; set all PORTH to output (LED on)
-	movwf	TRISH, ACCESS	    ;
-	movlw	0x0		    ; set all PORTJ to output (LED on)
-	movwf	TRISJ, ACCESS	    ;
+	movlw	0x	    ;
 	movlw	high(bytes)	    ; high byte of 'bytes'
 	movwf	TBLPTRH		    ; address of data in PM
 	movlw	low(bytes)	    ; low byte of 'bytes'
@@ -68,7 +65,12 @@ delay	decfsz	0x100		    ; decrement constant until 0
 	movlw	0x1		    ; reset constant
 	movwf	0x100		    ;
 	return
-	
+clock1	movlw	b'1101'		    ; CP2,OE2*,CP1,OE1*
+	movwf	PORTD, ACCESS	    ; set cp1 to low
+	call	delay		    ; delay for ~250 ns
+	movlw	b'1111'		    ; set cp1 to high
+	movwf	PORTD, ACCESS	    ; 
+	return	
 delb	movlw	upper(0x3FFFFF)	    ; load 22-bit number into
 	movwf	0x15		    ; FR 0x15
 	;movlw	high(0x3FFFFF)	    ;
@@ -84,12 +86,7 @@ dloop	decf	0x17, f		    ; no carry when 0x00 -> 0xff
 	bc	dloop		    ; if carry, then loop again
 	return			    ; carry not set so return
 
-clock1	movlw	b'1101'		    ; CP2,OE2*,CP1,OE1*
-	movwf	PORTD, ACCESS	    ; set cp1 to low
-	call	delay		    ; delay for ~250 ns
-	movlw	b'1111'		    ; set cp1 to high
-	movwf	PORTD, ACCESS	    ; 
-	return
+
 
 clock2	movlw	b'0111'		    ; CP2,OE2*,CP1,OE1*
 	movwf	PORTD, ACCESS	    ; set cp2 to low
