@@ -24,10 +24,11 @@ Hex2dec code
 mul12
     movf    H2D_input1, W
     mulwf   H2D_input3
-    movf    PRODH, W
+    movff   PRODH, H2D_mul_result2
     movff   PRODL, H2D_mul_result4
     movf    H2D_input2, W
     mulwf   H2D_input3
+    movf    H2D_mul_result2, W
     addwf   PRODL, W
     movwf   H2D_mul_result5
     movlw   0x0
@@ -44,6 +45,7 @@ mul22
     movff   H2D_mul_result4, H2D_mul_result1
     movff   H2D_mul_result5, H2D_mul_result2
     movff   H2D_mul_result6, H2D_mul_result3
+    
     movlw   high(H2D_mul_k)
     movwf   H2D_input3
     call    mul12
@@ -72,18 +74,23 @@ mul13
     addwfc  PRODH, W
     movwf   H2D_mul_result4
     return
-    end
     
 H2D_convert
     call    mul22
+    movlw   .1
+    addwf   H2D_mul_result4
     movff   H2D_mul_result4, H2D_convert1
     call    mul13
+    movlw   .1
+    addwf   H2D_mul_result4
     movff   H2D_mul_result4, H2D_convert2
     call    mul13
+    movlw   .1
+    addwf   H2D_mul_result4
     movff   H2D_mul_result4, H2D_convert3
     call    mul13
+    movlw   .1
+    addwf   H2D_mul_result4
     movff   H2D_mul_result4, H2D_convert4
     return
-
-
     end
