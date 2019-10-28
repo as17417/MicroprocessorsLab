@@ -1,9 +1,8 @@
 #include p18f87k22.inc
-
     global  ADC_Setup, ADC_Read
     
 ADC    code
-    
+
 ADC_Setup
     bsf	    TRISA,RA0	    ; use pin A0(==AN0) for input
     bsf	    ANCON0,ANSEL0   ; set A0 to analog
@@ -21,5 +20,4 @@ adc_loop
     btfsc   ADCON0,GO	    ; check to see if finished
     bra	    adc_loop
     return
-
     end
